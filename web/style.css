@@ -1,0 +1,46 @@
+:root {
+  --toolbar-h: 52px;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: #111;
+  color: #ddd;
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* Toolbar stays on top no matter what canvas does */
+#toolbar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: var(--toolbar-h);
+  box-sizing: border-box;
+
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+
+  border-bottom: 1px solid #333;
+  background: #161616;
+
+  z-index: 1000; /* <- KEY: always above canvas */
+}
+
+/* Canvas stays below toolbar */
+#canvas {
+  position: fixed !important; /* override runtime inline style */
+  left: 0 !important;
+  top: var(--toolbar-h) !important;
+  width: 100% !important;
+  height: calc(100% - var(--toolbar-h)) !important;
+
+  display: block;
+  outline: none;
+
+  z-index: 0;
+}
