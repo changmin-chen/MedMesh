@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>NIFTI → VTK.wasm demo</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+<div id="toolbar">
+    <input id="file" type="file" accept=".nii"/>
+    <label>
+        Iso:
+        <input id="iso" type="range" min="0" max="1000" step="1" value="300"/>
+        <span id="isoValue">300</span>
+    </label>
+    <button id="reset">Reset Camera</button>
+    <span id="range"></span>
+</div>
+
+<canvas id="canvas" tabindex="-1" onclick="this.focus()"></canvas>
+
+<script>
+    // Must exist BEFORE med_mesh.js executes
+    var Module = {
+        canvas: () => document.getElementById('canvas'),
+        print: (txt) => console.log(txt),
+        printErr: (txt) => console.error(txt),
+    };
+</script>
+
+<!-- IMPORTANT: UI script first (classic script, not module) -->
+<script src="app.js"></script>
+
+<!-- Emscripten output -->
+<script src="med_mesh.js"></script>
+</body>
+</html>
