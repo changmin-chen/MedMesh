@@ -136,7 +136,7 @@ void loadNifti(const std::string& virtualPath)
   SafeRender();
 }
 
-EMSCRIPTEN_BINDINGS(nifti_demo_module)
+EMSCRIPTEN_BINDINGS(med_mesh_module)
 {
   emscripten::function("render", &render);
   emscripten::function("resetCamera", &resetCamera);
