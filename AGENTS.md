@@ -7,7 +7,7 @@ This repository is a small VTK WebAssembly demo for loading `.nii` volumes in th
 - `web/app.js` wires file upload, iso slider, and camera reset
 - `web/style.css` handles the toolbar and canvas layout
 
-Treat `build/`, `build-*`, and `cmake-build-*` as generated output. Do not hand-edit generated files such as `build/nifti_demo.js`.
+Treat `build/`, `build-*`, and `cmake-build-*` as generated output. Do not hand-edit generated files such as `build/med_mesh.js`.
 
 ## Build, Test, and Development Commands
 Builds are expected to run inside Kitware’s VTK WebAssembly SDK container.

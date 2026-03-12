@@ -105,7 +105,7 @@
     });
   }
 
-  // Register hook BEFORE nifti_demo.js executes (because app.js loads first)
+  // Register hook BEFORE med_mesh.js executes (because app.js loads first)
   Module.onRuntimeInitialized = () => {
     console.log("[Emscripten] onRuntimeInitialized");
     initUI();
