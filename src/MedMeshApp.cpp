@@ -6,6 +6,7 @@
 #include "vtkDICOMImageReader.h"
 #include "vtkFlyingEdges3D.h"
 #include "vtkImageData.h"
+#include "vtkLight.h"
 #include "vtkInteractorStyleTrackballCamera.h"
 #include "vtkNIFTIImageReader.h"
 #include "vtkNew.h"
@@ -28,6 +29,51 @@
 namespace {
 
 constexpr const char* kCanvasSelector = "#canvas";
+
+void ConfigureMeshMaterial(vtkActor* actor)
+{
+  if (!actor)
+  {
+    return;
+  }
+
+  vtkProperty* property = actor->GetProperty();
+  property->SetColor(0.86, 0.72, 0.66);
+  property->SetInterpolationToPhong();
+  property->SetAmbient(0.18);
+  property->SetDiffuse(0.78);
+  property->SetSpecular(0.08);
+  property->SetSpecularPower(20.0);
+}
+
+void AddCameraLight(vtkRenderer* renderer, double x, double y, double z, double intensity,
+  double r, double g, double b)
+{
+  vtkNew<vtkLight> light;
+  light->SetLightTypeToCameraLight();
+  light->SetPosition(x, y, z);
+  light->SetFocalPoint(0.0, 0.0, 0.0);
+  light->SetDiffuseColor(r, g, b);
+  light->SetSpecularColor(r, g, b);
+  light->SetIntensity(intensity);
+  renderer->AddLight(light);
+}
+
+void ConfigureLighting(vtkRenderer* renderer)
+{
+  if (!renderer)
+  {
+    return;
+  }
+
+  renderer->AutomaticLightCreationOff();
+  renderer->RemoveAllLights();
+  renderer->LightFollowCameraOn();
+
+  AddCameraLight(renderer, 0.9, 1.0, 1.2, 1.00, 1.00, 0.97, 0.92);
+  AddCameraLight(renderer, -1.2, 0.3, 0.8, 0.45, 0.84, 0.90, 1.00);
+  AddCameraLight(renderer, -0.6, -1.0, 0.4, 0.20, 1.00, 1.00, 1.00);
+}
 
 std::vector<std::filesystem::path> ListSortedChildren(const std::filesystem::path& directory)
 {
@@ -63,6 +109,7 @@ void MedMeshApp::Initialize()
 
   renderer_ = vtkSmartPointer<vtkRenderer>::New();
   renderer_->SetBackground(0.10, 0.10, 0.12);
+  ConfigureLighting(renderer_);
 
   renderWindow_ = vtkSmartPointer<vtkWebAssemblyOpenGLRenderWindow>::New();
   renderWindow_->SetMultiSamples(0);
@@ -85,7 +132,7 @@ void MedMeshApp::Initialize()
 
   actor_ = vtkSmartPointer<vtkActor>::New();
   actor_->SetMapper(mapper_);
-  actor_->GetProperty()->SetColor(0.90, 0.92, 0.95);
+  ConfigureMeshMaterial(actor_);
   renderer_->AddActor(actor_);
   renderer_->ResetCamera();
 
