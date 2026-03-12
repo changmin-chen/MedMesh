@@ -380,10 +380,11 @@
 
     const iso = $("iso");
     const isoValue = $("isoValue");
+    const largestComponent = $("largestComponent");
     const resetBtn = $("reset");
     const downloadBtn = $("download");
 
-    if (!iso || !isoValue || !resetBtn || !downloadBtn) {
+    if (!iso || !isoValue || !largestComponent || !resetBtn || !downloadBtn) {
       console.error("[UI] Missing DOM elements.");
       return;
     }
@@ -396,6 +397,17 @@
 
     downloadBtn.addEventListener("click", () => {
       void downloadStl();
+    });
+
+    if (typeof Module.getKeepLargestComponent === "function") {
+      largestComponent.checked = Module.getKeepLargestComponent();
+    }
+
+    largestComponent.addEventListener("change", () => {
+      if (typeof Module.setKeepLargestComponent === "function") {
+        Module.setKeepLargestComponent(largestComponent.checked);
+      }
+      updateDownloadState();
     });
 
     iso.addEventListener("input", () => {

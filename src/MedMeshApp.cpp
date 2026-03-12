@@ -3,6 +3,7 @@
 #include "MedMeshApp.h"
 
 #include "vtkActor.h"
+#include "vtkCleanPolyData.h"
 #include "vtkDICOMImageReader.h"
 #include "vtkFlyingEdges3D.h"
 #include "vtkImageData.h"
@@ -11,12 +12,15 @@
 #include "vtkNIFTIImageReader.h"
 #include "vtkNew.h"
 #include "vtkPolyData.h"
+#include "vtkPolyDataConnectivityFilter.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkProperty.h"
 #include "vtkRenderer.h"
 #include "vtkSTLWriter.h"
+#include "vtkTriangleFilter.h"
 #include "vtkWebAssemblyOpenGLRenderWindow.h"
 #include "vtkWebAssemblyRenderWindowInteractor.h"
+#include "vtkWindowedSincPolyDataFilter.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -29,6 +33,10 @@
 namespace {
 
 constexpr const char* kCanvasSelector = "#canvas";
+constexpr int kSmoothingIterations = 15;
+constexpr double kSmoothingPassBand = 0.12;
+constexpr double kSmoothingFeatureAngle = 120.0;
+constexpr double kSmoothingEdgeAngle = 15.0;
 
 void ConfigureMeshMaterial(vtkActor* actor)
 {
@@ -73,6 +81,52 @@ void ConfigureLighting(vtkRenderer* renderer)
   AddCameraLight(renderer, 0.9, 1.0, 1.2, 1.00, 1.00, 0.97, 0.92);
   AddCameraLight(renderer, -1.2, 0.3, 0.8, 0.45, 0.84, 0.90, 1.00);
   AddCameraLight(renderer, -0.6, -1.0, 0.4, 0.20, 1.00, 1.00, 1.00);
+}
+
+void ConfigureCleanFilter(vtkCleanPolyData* cleaner)
+{
+  if (!cleaner)
+  {
+    return;
+  }
+
+  cleaner->PointMergingOn();
+  cleaner->SetTolerance(0.0);
+}
+
+void ConfigureConnectivityFilter(
+  vtkPolyDataConnectivityFilter* connectivity, bool keepLargestComponent)
+{
+  if (!connectivity)
+  {
+    return;
+  }
+
+  connectivity->ColorRegionsOff();
+  if (keepLargestComponent)
+  {
+    connectivity->SetExtractionModeToLargestRegion();
+  }
+  else
+  {
+    connectivity->SetExtractionModeToAllRegions();
+  }
+}
+
+void ConfigureSmoother(vtkWindowedSincPolyDataFilter* smoother)
+{
+  if (!smoother)
+  {
+    return;
+  }
+
+  smoother->SetNumberOfIterations(kSmoothingIterations);
+  smoother->SetPassBand(kSmoothingPassBand);
+  smoother->SetFeatureAngle(kSmoothingFeatureAngle);
+  smoother->SetEdgeAngle(kSmoothingEdgeAngle);
+  smoother->BoundarySmoothingOff();
+  smoother->FeatureEdgeSmoothingOff();
+  smoother->NormalizeCoordinatesOn();
 }
 
 std::vector<std::filesystem::path> ListSortedChildren(const std::filesystem::path& directory)
@@ -128,7 +182,30 @@ void MedMeshApp::Initialize()
   isoSurface_->ComputeNormalsOn();
   isoSurface_->ComputeScalarsOff();
 
+  meshPreClean_ = vtkSmartPointer<vtkCleanPolyData>::New();
+  ConfigureCleanFilter(meshPreClean_);
+  meshPreClean_->SetInputConnection(isoSurface_->GetOutputPort());
+
+  meshConnectivity_ = vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
+  meshConnectivity_->SetInputConnection(meshPreClean_->GetOutputPort());
+  UpdateConnectivityMode();
+
+  meshTriangulator_ = vtkSmartPointer<vtkTriangleFilter>::New();
+  meshTriangulator_->SetInputConnection(meshConnectivity_->GetOutputPort());
+  meshTriangulator_->PassVertsOff();
+  meshTriangulator_->PassLinesOff();
+
+  meshSmoother_ = vtkSmartPointer<vtkWindowedSincPolyDataFilter>::New();
+  meshSmoother_->SetInputConnection(meshTriangulator_->GetOutputPort());
+  ConfigureSmoother(meshSmoother_);
+
+  meshFinalClean_ = vtkSmartPointer<vtkCleanPolyData>::New();
+  ConfigureCleanFilter(meshFinalClean_);
+  meshFinalClean_->SetInputConnection(meshSmoother_->GetOutputPort());
+
   mapper_ = vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper_->SetInputConnection(meshFinalClean_->GetOutputPort());
+  mapper_->ScalarVisibilityOff();
 
   actor_ = vtkSmartPointer<vtkActor>::New();
   actor_->SetMapper(mapper_);
@@ -179,6 +256,18 @@ void MedMeshApp::SetIsoValue(double value)
   Render();
 }
 
+void MedMeshApp::SetKeepLargestComponent(bool keepLargestComponent)
+{
+  if (keepLargestComponent_ == keepLargestComponent)
+  {
+    return;
+  }
+
+  keepLargestComponent_ = keepLargestComponent;
+  UpdateSurface();
+  Render();
+}
+
 double MedMeshApp::GetIsoValue() const
 {
   return isoValue_;
@@ -202,6 +291,11 @@ const std::string& MedMeshApp::GetLastError() const
 bool MedMeshApp::HasMesh() const
 {
   return hasMesh_;
+}
+
+bool MedMeshApp::GetKeepLargestComponent() const
+{
+  return keepLargestComponent_;
 }
 
 bool MedMeshApp::LoadNifti(const std::string& virtualPath)
@@ -243,15 +337,15 @@ bool MedMeshApp::ExportStl(const std::string& virtualPath)
 {
   ClearError();
 
-  if (!hasMesh_ || isoSurface_->GetNumberOfInputConnections(0) == 0)
+  if (!hasMesh_ || !meshFinalClean_ || isoSurface_->GetNumberOfInputConnections(0) == 0)
   {
     SetError("No mesh is available to export.");
     return false;
   }
 
-  isoSurface_->Update();
-  vtkPolyData* surface = isoSurface_->GetOutput();
-  if (!surface || surface->GetNumberOfPoints() == 0)
+  meshFinalClean_->Update();
+  vtkPolyData* surface = GetMeshOutput();
+  if (!surface || surface->GetNumberOfPoints() == 0 || surface->GetNumberOfCells() == 0)
   {
     hasMesh_ = false;
     SetError("The current iso-surface is empty.");
@@ -261,7 +355,7 @@ bool MedMeshApp::ExportStl(const std::string& virtualPath)
   vtkNew<vtkSTLWriter> writer;
   writer->SetFileTypeToBinary();
   writer->SetFileName(virtualPath.c_str());
-  writer->SetInputConnection(isoSurface_->GetOutputPort());
+  writer->SetInputConnection(meshFinalClean_->GetOutputPort());
 
   if (writer->Write() == 0)
   {
@@ -274,7 +368,7 @@ bool MedMeshApp::ExportStl(const std::string& virtualPath)
 
 void MedMeshApp::UpdateSurface()
 {
-  if (!isoSurface_ || isoSurface_->GetNumberOfInputConnections(0) == 0)
+  if (!isoSurface_ || !meshFinalClean_ || isoSurface_->GetNumberOfInputConnections(0) == 0)
   {
     hasMesh_ = false;
     return;
@@ -282,13 +376,12 @@ void MedMeshApp::UpdateSurface()
 
   isoSurface_->SetValue(0, isoValue_);
   isoSurface_->Modified();
-  isoSurface_->Update();
-
-  mapper_->SetInputConnection(isoSurface_->GetOutputPort());
+  UpdateConnectivityMode();
+  meshFinalClean_->Update();
   mapper_->Update();
 
-  vtkPolyData* surface = isoSurface_->GetOutput();
-  hasMesh_ = surface && surface->GetNumberOfPoints() > 0;
+  vtkPolyData* surface = GetMeshOutput();
+  hasMesh_ = surface && surface->GetNumberOfPoints() > 0 && surface->GetNumberOfCells() > 0;
 }
 
 void MedMeshApp::UpdateScalarRange(vtkImageData* image)
@@ -310,6 +403,20 @@ void MedMeshApp::ClampIsoValueToRange()
   {
     isoValue_ = (scalarRange_[0] + scalarRange_[1]) * 0.5;
   }
+}
+
+void MedMeshApp::UpdateConnectivityMode()
+{
+  ConfigureConnectivityFilter(meshConnectivity_, keepLargestComponent_);
+  if (meshConnectivity_)
+  {
+    meshConnectivity_->Modified();
+  }
+}
+
+vtkPolyData* MedMeshApp::GetMeshOutput()
+{
+  return meshFinalClean_ ? meshFinalClean_->GetOutput() : nullptr;
 }
 
 bool MedMeshApp::LoadVolume(vtkImageData* image)

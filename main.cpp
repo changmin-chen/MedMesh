@@ -46,9 +46,19 @@ bool hasMesh()
   return app().HasMesh();
 }
 
+bool getKeepLargestComponent()
+{
+  return app().GetKeepLargestComponent();
+}
+
 void setIsoValue(double value)
 {
   app().SetIsoValue(value);
+}
+
+void setKeepLargestComponent(bool keepLargestComponent)
+{
+  app().SetKeepLargestComponent(keepLargestComponent);
 }
 
 bool loadNifti(const std::string& virtualPath)
@@ -77,7 +87,9 @@ EMSCRIPTEN_BINDINGS(med_mesh_module)
   emscripten::function("getScalarMax", &getScalarMax);
   emscripten::function("getLastError", &getLastError);
   emscripten::function("hasMesh", &hasMesh);
+  emscripten::function("getKeepLargestComponent", &getKeepLargestComponent);
   emscripten::function("setIsoValue", &setIsoValue);
+  emscripten::function("setKeepLargestComponent", &setKeepLargestComponent);
   emscripten::function("loadNifti", &loadNifti);
   emscripten::function("loadDicom", &loadDicom);
   emscripten::function("exportStl", &exportStl);

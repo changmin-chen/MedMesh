@@ -74,6 +74,22 @@ input {
   background: var(--panel);
 }
 
+.toolbar__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  white-space: nowrap;
+}
+
+.toolbar__toggle input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 #iso {
   width: min(26vw, 260px);
   accent-color: var(--accent);
@@ -158,9 +174,9 @@ body.is-busy #dropzone {
   opacity: 0;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1180px) {
   :root {
-    --toolbar-h: 142px;
+    --toolbar-h: 248px;
   }
 
   #toolbar {
@@ -175,6 +191,15 @@ body.is-busy #dropzone {
   .toolbar__control {
     flex: 1 1 100%;
     justify-content: space-between;
+  }
+
+  .toolbar__toggle {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  button {
+    flex: 1 1 calc(50% - 7px);
   }
 
   #iso {
