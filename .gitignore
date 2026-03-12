@@ -70,3 +70,6 @@ Testing/
 
 # CLion
 .idea/
+
+# Agents
+.claude/settings.local.json
