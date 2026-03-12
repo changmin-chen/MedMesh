@@ -21,6 +21,11 @@ void resetCamera()
   app().ResetCamera();
 }
 
+bool applyMeshSettings(double value, bool keepLargestComponent)
+{
+  return app().ApplyMeshSettings(value, keepLargestComponent);
+}
+
 double getIsoValue()
 {
   return app().GetIsoValue();
@@ -82,6 +87,7 @@ EMSCRIPTEN_BINDINGS(med_mesh_module)
 {
   emscripten::function("render", &render);
   emscripten::function("resetCamera", &resetCamera);
+  emscripten::function("applyMeshSettings", &applyMeshSettings);
   emscripten::function("getIsoValue", &getIsoValue);
   emscripten::function("getScalarMin", &getScalarMin);
   emscripten::function("getScalarMax", &getScalarMax);

@@ -59,31 +59,53 @@
   <!-- ISO SURFACE -->
   <section class="panel-section">
     <div class="section-header">
-      <span class="section-label">Iso Surface</span>
-      <span id="isoValue" class="value-badge">300</span>
+      <span class="section-label">Mesh Build</span>
+      <span id="meshState" class="state-chip" data-state="idle">Idle</span>
     </div>
+
+    <div class="value-grid">
+      <div class="value-stack">
+        <span class="value-caption">Pending</span>
+        <span id="isoPending" class="value-badge">-</span>
+      </div>
+      <div class="value-stack">
+        <span class="value-caption">Rendered</span>
+        <span id="isoRendered" class="value-badge value-badge--muted">-</span>
+      </div>
+    </div>
+
+    <div class="numeric-row">
+      <button id="isoStepDown" type="button" class="step-btn" disabled>-1</button>
+      <label class="numeric-field" for="isoInput">
+        <span class="numeric-field__label">Iso value</span>
+        <input id="isoInput" type="number" step="any" inputmode="decimal" disabled/>
+      </label>
+      <button id="isoStepUp" type="button" class="step-btn" disabled>+1</button>
+    </div>
+
     <div class="slider-track-wrap">
-      <input id="iso" type="range" min="0" max="1000" step="any" value="300"/>
+      <input id="iso" type="range" min="0" max="1000" step="any" value="300" disabled/>
+    </div>
+    <div class="slider-landmarks" aria-hidden="true">
+      <span id="rangeMin">-</span>
+      <span id="rangeMid">-</span>
+      <span id="rangeMax">-</span>
     </div>
     <div class="meta-row">
       <span id="range">Range: [–, –]</span>
     </div>
-  </section>
-
-  <div class="sidebar__rule"></div>
-
-  <!-- FILTER -->
-  <section class="panel-section">
-    <div class="section-header">
-      <span class="section-label">Filter</span>
-    </div>
+    <p id="meshHint" class="helper-text">Load a volume to stage iso and mesh changes.</p>
     <label class="toggle-row" for="largestComponent">
-      <input id="largestComponent" type="checkbox" checked/>
+      <input id="largestComponent" type="checkbox" checked disabled/>
       <span class="toggle-track">
         <span class="toggle-thumb"></span>
       </span>
       <span class="toggle-label">Largest component only</span>
     </label>
+    <p class="setting-note">Applies to both the viewport mesh and STL export.</p>
+    <button id="applyMesh" type="button" class="action-btn action-btn--accent" disabled>
+      Render Pending Surface
+    </button>
   </section>
 
   <div class="sidebar__rule"></div>
@@ -130,6 +152,13 @@
   <div class="dropzone__panel">
     <strong>Drop to load</strong>
     <span>File &rarr; NIFTI &nbsp;&middot;&nbsp; Directory &rarr; DICOM series</span>
+  </div>
+</div>
+
+<div id="viewportStatus" aria-live="polite" aria-hidden="true">
+  <div class="viewport-status__panel">
+    <span class="viewport-status__label">Renderer</span>
+    <strong id="viewportStatusText">Updating surface...</strong>
   </div>
 </div>
 

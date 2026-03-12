@@ -33,6 +33,7 @@ public:
 
   void Render();
   void ResetCamera();
+  bool ApplyMeshSettings(double value, bool keepLargestComponent);
   void SetIsoValue(double value);
   void SetKeepLargestComponent(bool keepLargestComponent);
 

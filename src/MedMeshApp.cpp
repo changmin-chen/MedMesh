@@ -249,11 +249,27 @@ void MedMeshApp::ResetCamera()
   Render();
 }
 
-void MedMeshApp::SetIsoValue(double value)
+bool MedMeshApp::ApplyMeshSettings(double value, bool keepLargestComponent)
 {
+  ClearError();
   isoValue_ = value;
+  keepLargestComponent_ = keepLargestComponent;
+
+  if (!isoSurface_ || !meshFinalClean_ || isoSurface_->GetNumberOfInputConnections(0) == 0)
+  {
+    hasMesh_ = false;
+    SetError("No volume is loaded.");
+    return false;
+  }
+
   UpdateSurface();
   Render();
+  return true;
+}
+
+void MedMeshApp::SetIsoValue(double value)
+{
+  ApplyMeshSettings(value, keepLargestComponent_);
 }
 
 void MedMeshApp::SetKeepLargestComponent(bool keepLargestComponent)
@@ -263,9 +279,7 @@ void MedMeshApp::SetKeepLargestComponent(bool keepLargestComponent)
     return;
   }
 
-  keepLargestComponent_ = keepLargestComponent;
-  UpdateSurface();
-  Render();
+  ApplyMeshSettings(isoValue_, keepLargestComponent);
 }
 
 double MedMeshApp::GetIsoValue() const
