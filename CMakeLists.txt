@@ -58,6 +58,9 @@ add_custom_command(
         "${CMAKE_CURRENT_SOURCE_DIR}/web/index.html"
         "$<TARGET_FILE_DIR:med_mesh>/index.html"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/web/favicon.svg"
+        "$<TARGET_FILE_DIR:med_mesh>/favicon.svg"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/web/app.js"
         "$<TARGET_FILE_DIR:med_mesh>/app.js"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
