@@ -1,0 +1,104 @@
+Checks: >
+  readability-identifier-naming
+
+WarningsAsErrors: >
+  readability-identifier-naming
+
+HeaderFilterRegex: '^(?!.*(third_party|generated)/).*$'
+FormatStyle: none
+
+CheckOptions:
+  # ── 檔名 ─────────────────────────────────────────────
+  - key: readability-identifier-naming.FileNameCase
+    value: lower_case
+  - key: readability-identifier-naming.FileNameSuffix
+    value: 'hpp;cpp'
+
+  # ── 命名空間 ───────────────────────────────────────
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+
+  # ── 型別 ───────────────────────────────────────────
+  - key: readability-identifier-naming.TypeCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+
+  # ── 函式/方法 ─────────────────────────────────────
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.MethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.PublicMethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.PrivateMethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.ProtectedMethodCase
+    value: CamelCase
+
+  # ── 變數/參數（整體用 lowerCamel：camelBack）────────
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.StaticVariableCase
+    value: camelBack
+
+  # ── 成員變數（保留底線尾綴；public 不加底線）───────
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack
+  - key: readability-identifier-naming.MemberSuffix
+    value: _
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: _
+  - key: readability-identifier-naming.PublicMemberSuffix
+    value: ""
+
+  # ── 常數（精確分流）────────────────────────────────
+  # 1) 全域/namespace-scope 常數：kCamelCase
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: k
+
+  # 2) 函式內 const 臨時變數：沿用 local 規則（不加 k）
+  - key: readability-identifier-naming.LocalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalConstantPrefix
+    value: ""
+
+  # 3) constexpr（任何 scope）：kCamelCase
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstexprVariablePrefix
+    value: k
+
+  # 4) 成員常數（const 成員）：跟一般成員一致（不加 k）
+  - key: readability-identifier-naming.MemberConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.MemberConstantSuffix
+    value: _
+
+  # ── enum 值（依你原則保留 k 前綴）──────────────────
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: k
+
+  # ── 其他建議補強 ───────────────────────────────────
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
