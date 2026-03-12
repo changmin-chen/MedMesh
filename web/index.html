@@ -1,40 +1,48 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>NIFTI → VTK.wasm demo</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
-    <link rel="stylesheet" href="style.css"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>NIFTI / DICOM to STL</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 
 <body>
 <div id="toolbar">
-    <input id="file" type="file" accept=".nii"/>
-    <label>
-        Iso:
-        <input id="iso" type="range" min="0" max="1000" step="1" value="300"/>
-        <span id="isoValue">300</span>
-    </label>
-    <button id="reset">Reset Camera</button>
-    <span id="range"></span>
+  <div class="toolbar__intro">
+    <strong>Drop a `.nii` file or a DICOM folder</strong>
+    <span id="status" data-state="ready">Waiting for a drop.</span>
+  </div>
+
+  <label class="toolbar__control" for="iso">
+    <span>Iso</span>
+    <input id="iso" type="range" min="0" max="1000" step="any" value="300"/>
+    <span id="isoValue">300</span>
+  </label>
+
+  <button id="reset" type="button">Reset Camera</button>
+  <button id="download" type="button" disabled>Download STL</button>
+  <span id="range">Range: [-, -]</span>
+</div>
+
+<div id="dropzone" aria-hidden="true">
+  <div class="dropzone__panel">
+    <strong>Drop to load</strong>
+    <span>File -> NIFTI. Directory -> first readable DICOM series.</span>
+  </div>
 </div>
 
 <canvas id="canvas" tabindex="-1" onclick="this.focus()"></canvas>
 
 <script>
-    // Must exist BEFORE med_mesh.js executes
-    var Module = {
-        canvas: () => document.getElementById('canvas'),
-        print: (txt) => console.log(txt),
-        printErr: (txt) => console.error(txt),
-    };
+  var Module = {
+    canvas: () => document.getElementById("canvas"),
+    print: (txt) => console.log(txt),
+    printErr: (txt) => console.error(txt),
+  };
 </script>
-
-<!-- IMPORTANT: UI script first (classic script, not module) -->
 <script src="app.js"></script>
-
-<!-- Emscripten output -->
 <script src="med_mesh.js"></script>
 </body>
 </html>

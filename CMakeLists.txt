@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(VTK REQUIRED COMPONENTS
+        IOGeometry
         IOImage
         FiltersCore
         FiltersSources
@@ -17,9 +18,17 @@ find_package(VTK REQUIRED COMPONENTS
         RenderingUI
 )
 
-add_executable(med_mesh main.cpp)
+add_executable(med_mesh
+        main.cpp
+        src/MedMeshApp.cpp
+)
+
+target_include_directories(med_mesh PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
 
 target_link_libraries(med_mesh PRIVATE
+        VTK::IOGeometry
         VTK::IOImage
         VTK::FiltersCore
         VTK::FiltersSources
@@ -43,6 +52,7 @@ target_link_options(med_mesh PRIVATE
 vtk_module_autoinit(
         TARGETS med_mesh
         MODULES
+        VTK::IOGeometry
         VTK::IOImage
         VTK::FiltersCore
         VTK::FiltersSources
