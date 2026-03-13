@@ -60,18 +60,6 @@
   <section class="panel-section">
     <div class="section-header">
       <span class="section-label">Mesh Build</span>
-      <span id="meshState" class="state-chip" data-state="idle">Idle</span>
-    </div>
-
-    <div class="value-grid">
-      <div class="value-stack">
-        <span class="value-caption">Pending</span>
-        <span id="isoPending" class="value-badge">-</span>
-      </div>
-      <div class="value-stack">
-        <span class="value-caption">Rendered</span>
-        <span id="isoRendered" class="value-badge value-badge--muted">-</span>
-      </div>
     </div>
 
     <div class="numeric-row">
@@ -91,10 +79,6 @@
       <span id="rangeMid">-</span>
       <span id="rangeMax">-</span>
     </div>
-    <div class="meta-row">
-      <span id="range">Range: [–, –]</span>
-    </div>
-    <p id="meshHint" class="helper-text">Load a volume to stage iso and mesh changes.</p>
     <label class="toggle-row" for="largestComponent">
       <input id="largestComponent" type="checkbox" checked disabled/>
       <span class="toggle-track">
@@ -102,43 +86,35 @@
       </span>
       <span class="toggle-label">Largest component only</span>
     </label>
-    <p class="setting-note">Applies to both the viewport mesh and STL export.</p>
     <button id="applyMesh" type="button" class="action-btn action-btn--accent" disabled>
-      Render Pending Surface
+      Apply
     </button>
   </section>
 
   <div class="sidebar__rule"></div>
 
-  <!-- VIEWPORT -->
+  <!-- ACTIONS -->
   <section class="panel-section">
     <div class="section-header">
-      <span class="section-label">Viewport</span>
+      <span class="section-label">Actions</span>
     </div>
-    <button id="reset" type="button" class="action-btn">
-      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M1.5 6.5a5 5 0 1 0 .9-2.8"/>
-        <path d="M1.5 1.5v3h3"/>
-      </svg>
-      Reset Camera
-    </button>
-  </section>
-
-  <div class="sidebar__rule"></div>
-
-  <!-- EXPORT -->
-  <section class="panel-section">
-    <div class="section-header">
-      <span class="section-label">Export</span>
+    <div class="actions-row">
+      <button id="reset" type="button" class="action-btn action-btn--ghost" title="Reset Camera" disabled>
+        <svg width="14" height="14" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1.5 6.5a5 5 0 1 0 .9-2.8"/>
+          <path d="M1.5 1.5v3h3"/>
+        </svg>
+        Reset Camera
+      </button>
+      <button id="download" type="button" class="action-btn action-btn--accent" disabled>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6.5 1.5v8"/>
+          <path d="M3.5 7l3 3 3-3"/>
+          <path d="M1.5 11.5h10"/>
+        </svg>
+        Export STL
+      </button>
     </div>
-    <button id="download" type="button" class="action-btn action-btn--accent" disabled>
-      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M6.5 1.5v8"/>
-        <path d="M3.5 7l3 3 3-3"/>
-        <path d="M1.5 11.5h10"/>
-      </svg>
-      Export STL
-    </button>
   </section>
 
   <div class="sidebar__footer">

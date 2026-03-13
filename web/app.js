@@ -214,47 +214,6 @@
       state.pendingKeepLargestComponent !== state.renderedKeepLargestComponent;
   }
 
-  function getMeshStateLabel() {
-    if (state.busy) {
-      return { text: "Rendering", value: "rendering" };
-    }
-    if (!state.hasVolumeLoaded) {
-      return { text: "Idle", value: "idle" };
-    }
-    if (hasPendingMeshChanges()) {
-      return { text: "Pending", value: "pending" };
-    }
-    return { text: "Rendered", value: "rendered" };
-  }
-
-  function getMeshHint() {
-    if (!state.hasVolumeLoaded) {
-      return "Load a volume to stage iso and mesh changes.";
-    }
-    if (state.busy) {
-      return "The rendered mesh will refresh after this rebuild finishes.";
-    }
-    if (!hasPendingMeshChanges()) {
-      return "Mesh and STL export match the rendered surface.";
-    }
-
-    const changes = [];
-    if (!isNearlyEqual(state.pendingIsoValue, state.renderedIsoValue)) {
-      changes.push(
-        `Iso ${formatNumber(state.renderedIsoValue)} -> ${formatNumber(state.pendingIsoValue)}`
-      );
-    }
-    if (state.pendingKeepLargestComponent !== state.renderedKeepLargestComponent) {
-      changes.push(
-        state.pendingKeepLargestComponent
-          ? "Largest component only enabled"
-          : "All connected components enabled"
-      );
-    }
-
-    return `Pending changes: ${changes.join(" · ")}. Apply to rebuild the surface.`;
-  }
-
   function syncRenderedStateFromModule() {
     if (typeof Module.getIsoValue === "function") {
       state.renderedIsoValue = clampIsoValue(Number(Module.getIsoValue()));
@@ -275,14 +234,12 @@
   function updateScalarControls() {
     const iso = $("iso");
     const isoInput = $("isoInput");
-    const rangeEl = $("range");
     const rangeMin = $("rangeMin");
     const rangeMid = $("rangeMid");
     const rangeMax = $("rangeMax");
     const stepDown = $("isoStepDown");
     const stepUp = $("isoStepUp");
-    if (!iso || !isoInput || !rangeEl || !rangeMin || !rangeMid || !rangeMax ||
-        !stepDown || !stepUp) {
+    if (!iso || !isoInput || !rangeMin || !rangeMid || !rangeMax || !stepDown || !stepUp) {
       return;
     }
 
@@ -298,7 +255,6 @@
     isoInput.max = String(max);
     isoInput.step = String(nudgeStep);
 
-    rangeEl.textContent = `Range: [${formatNumber(min)}, ${formatNumber(max)}]`;
     rangeMin.textContent = formatNumber(min);
     rangeMid.textContent = formatNumber(midpoint);
     rangeMax.textContent = formatNumber(max);
@@ -312,24 +268,18 @@
   function updateMeshControls() {
     const iso = $("iso");
     const isoInput = $("isoInput");
-    const isoPending = $("isoPending");
-    const isoRendered = $("isoRendered");
     const largestComponent = $("largestComponent");
     const applyMesh = $("applyMesh");
-    const meshState = $("meshState");
-    const meshHint = $("meshHint");
     const stepDown = $("isoStepDown");
     const stepUp = $("isoStepUp");
     const resetBtn = $("reset");
-    if (!iso || !isoInput || !isoPending || !isoRendered || !largestComponent ||
-        !applyMesh || !meshState || !meshHint || !stepDown || !stepUp || !resetBtn) {
+    if (!iso || !isoInput || !largestComponent || !applyMesh || !stepDown || !stepUp || !resetBtn) {
       return;
     }
 
     const hasVolume = state.hasVolumeLoaded;
     const dirty = hasPendingMeshChanges();
     const disabled = state.busy || !hasVolume;
-    const meshStateLabel = getMeshStateLabel();
 
     iso.disabled = disabled;
     iso.value = hasVolume ? String(state.pendingIsoValue) : (iso.min || "0");
@@ -347,18 +297,7 @@
     resetBtn.disabled = state.busy || !hasVolume;
 
     applyMesh.disabled = state.busy || !hasVolume || !dirty;
-    applyMesh.textContent = state.busy
-      ? "Rendering Surface..."
-      : dirty
-        ? "Render Pending Surface"
-        : "Surface Up To Date";
-
-    isoPending.textContent = hasVolume ? formatNumber(state.pendingIsoValue) : "-";
-    isoRendered.textContent = hasVolume ? formatNumber(state.renderedIsoValue) : "-";
-
-    meshState.textContent = meshStateLabel.text;
-    meshState.dataset.state = meshStateLabel.value;
-    meshHint.textContent = getMeshHint();
+    applyMesh.textContent = "Apply";
 
     document.body.classList.toggle("has-pending-mesh", dirty);
   }

@@ -17,6 +17,8 @@ find_package(VTK REQUIRED COMPONENTS
         RenderingOpenGL2
         RenderingUI
 )
+message(STATUS "Found VTK version: ${VTK_VERSION}")
+
 
 add_executable(med_mesh
         main.cpp
