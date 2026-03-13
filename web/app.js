@@ -122,6 +122,7 @@
       return;
     }
     status.textContent = message;
+    status.title = message;
     status.dataset.state = isError ? "error" : "ready";
   }
 
@@ -337,7 +338,7 @@
     }
     setPendingIsoValue(state.pendingIsoValue + delta, false);
     setStatus(
-      `Pending iso ${formatNumber(state.pendingIsoValue)}. Apply to rebuild the surface.`,
+      `Pending iso ${formatNumber(state.pendingIsoValue)}.Apply to rebuild the surface.`,
       false
     );
   }

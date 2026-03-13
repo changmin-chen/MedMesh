@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════ */
 
 :root {
-  --sidebar-w: 256px;
+  --sidebar-w: 352px;
 
   /* backgrounds */
   --bg:          #060a0e;
@@ -190,7 +190,8 @@ body.is-drag-active .drop-hint {
   display: flex;
   align-items: center;
   gap: 7px;
-  min-height: 20px;
+  height: 20px;
+  overflow: hidden;
 }
 
 .status-dot {
@@ -216,6 +217,11 @@ body.is-busy .status-dot {
   font-size: 12.5px;
   color: var(--text-dim);
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  cursor: default;
 }
 
 #status[data-state="error"] {
