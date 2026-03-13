@@ -21,6 +21,7 @@
 #include "vtkProperty.h"
 #include "vtkRenderer.h"
 #include "vtkSTLWriter.h"
+#include "vtkTrivialProducer.h"
 #include "vtkTriangleFilter.h"
 #include "vtkWebAssemblyOpenGLRenderWindow.h"
 #include "vtkWebAssemblyRenderWindowInteractor.h"
@@ -227,16 +228,19 @@ void MedMeshApp::Initialize() {
     ConfigureNormals(meshNormals_);
     meshNormals_->SetInputConnection(meshFinalClean_->GetOutputPort());
 
-    // Placeholder cone
     placeholderCone_ = vtkSmartPointer<vtkConeSource>::New();
     placeholderCone_->SetResolution(64);
     placeholderCone_->SetHeight(1.5);
     placeholderCone_->SetRadius(0.6);
     placeholderCone_->SetDirection(0.0, 1.0, 0.0);
     placeholderCone_->CappingOn();
+    placeholderCone_->Update();
+
+    pipelineInput_ = vtkSmartPointer<vtkTrivialProducer>::New();
+    pipelineInput_->SetOutput(placeholderCone_->GetOutput());
 
     mapper_ = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper_->SetInputConnection(placeholderCone_->GetOutputPort());
+    mapper_->SetInputConnection(pipelineInput_->GetOutputPort());
     mapper_->ScalarVisibilityOff();
 
     actor_ = vtkSmartPointer<vtkActor>::New();
@@ -450,11 +454,10 @@ bool MedMeshApp::LoadVolume(vtkImageData* image) {
         return false;
     }
 
-    mapper_->SetInputConnection(meshNormals_->GetOutputPort());
-
     UpdateScalarRange(image);
     ClampIsoValueToRange();
     UpdateSurface();
+    pipelineInput_->SetOutput(meshNormals_->GetOutput());
 
     if (renderer_) {
         renderer_->ResetCamera();

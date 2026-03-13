@@ -21,6 +21,7 @@ class vtkPolyDataConnectivityFilter;
 class vtkPolyDataMapper;
 class vtkPolyDataNormals;
 class vtkRenderer;
+class vtkTrivialProducer;
 class vtkTriangleFilter;
 class vtkWebAssemblyOpenGLRenderWindow;
 class vtkWebAssemblyRenderWindowInteractor;
@@ -81,6 +82,7 @@ private:
   vtkSmartPointer<vtkPolyDataMapper> mapper_;
   vtkSmartPointer<vtkActor> actor_;
   vtkSmartPointer<vtkConeSource> placeholderCone_;
+  vtkSmartPointer<vtkTrivialProducer> pipelineInput_;
   vtkSmartPointer<vtkNIFTIImageReader> niftiReader_;
   vtkSmartPointer<vtkDICOMImageReader> dicomReader_;
   vtkSmartPointer<vtkImageResample> volumeResample_;
