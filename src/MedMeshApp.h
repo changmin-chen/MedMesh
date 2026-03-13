@@ -5,7 +5,7 @@
 #include <array>
 #include <string>
 
-#include "vtkSmartPointer.h"
+#include <vtkSmartPointer.h>
 
 class vtkActor;
 class vtkCleanPolyData;
