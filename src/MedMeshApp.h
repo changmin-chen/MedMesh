@@ -81,7 +81,6 @@ private:
   vtkSmartPointer<vtkPolyDataMapper> mapper_;
   vtkSmartPointer<vtkActor> actor_;
   vtkSmartPointer<vtkConeSource> placeholderCone_;
-  vtkSmartPointer<vtkActor> placeholderActor_;
   vtkSmartPointer<vtkNIFTIImageReader> niftiReader_;
   vtkSmartPointer<vtkDICOMImageReader> dicomReader_;
   vtkSmartPointer<vtkImageResample> volumeResample_;

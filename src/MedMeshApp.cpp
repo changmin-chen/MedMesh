@@ -162,7 +162,7 @@ std::vector<std::filesystem::path> ListSortedChildren(const std::filesystem::pat
         children.push_back(entry.path());
     }
 
-    std::sort(children.begin(), children.end());
+    std::ranges::sort(children);
     return children;
 }
 } // namespace
@@ -227,15 +227,7 @@ void MedMeshApp::Initialize() {
     ConfigureNormals(meshNormals_);
     meshNormals_->SetInputConnection(meshFinalClean_->GetOutputPort());
 
-    mapper_ = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper_->SetInputConnection(meshNormals_->GetOutputPort());
-    mapper_->ScalarVisibilityOff();
-
-    actor_ = vtkSmartPointer<vtkActor>::New();
-    actor_->SetMapper(mapper_);
-    ConfigureMeshMaterial(actor_);
-    renderer_->AddActor(actor_);
-
+    // Placeholder cone
     placeholderCone_ = vtkSmartPointer<vtkConeSource>::New();
     placeholderCone_->SetResolution(64);
     placeholderCone_->SetHeight(1.5);
@@ -243,14 +235,14 @@ void MedMeshApp::Initialize() {
     placeholderCone_->SetDirection(0.0, 1.0, 0.0);
     placeholderCone_->CappingOn();
 
-    vtkNew<vtkPolyDataMapper> placeholderMapper;
-    placeholderMapper->SetInputConnection(placeholderCone_->GetOutputPort());
-    placeholderMapper->ScalarVisibilityOff();
+    mapper_ = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper_->SetInputConnection(placeholderCone_->GetOutputPort());
+    mapper_->ScalarVisibilityOff();
 
-    placeholderActor_ = vtkSmartPointer<vtkActor>::New();
-    placeholderActor_->SetMapper(placeholderMapper);
-    ConfigureMeshMaterial(placeholderActor_);
-    renderer_->AddActor(placeholderActor_);
+    actor_ = vtkSmartPointer<vtkActor>::New();
+    actor_->SetMapper(mapper_);
+    ConfigureMeshMaterial(actor_);
+    renderer_->AddActor(actor_);
     renderer_->ResetCamera();
 
     niftiReader_ = vtkSmartPointer<vtkNIFTIImageReader>::New();
@@ -458,13 +450,11 @@ bool MedMeshApp::LoadVolume(vtkImageData* image) {
         return false;
     }
 
+    mapper_->SetInputConnection(meshNormals_->GetOutputPort());
+
     UpdateScalarRange(image);
     ClampIsoValueToRange();
     UpdateSurface();
-
-    if (placeholderActor_) {
-        placeholderActor_->VisibilityOff();
-    }
 
     if (renderer_) {
         renderer_->ResetCamera();
