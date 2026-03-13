@@ -13,6 +13,7 @@ find_package(VTK REQUIRED COMPONENTS
         IOImage
         FiltersCore
         FiltersSources
+        ImagingGeneral
         InteractionStyle
         RenderingOpenGL2
         RenderingUI
@@ -34,6 +35,7 @@ target_link_libraries(med_mesh PRIVATE
         VTK::IOImage
         VTK::FiltersCore
         VTK::FiltersSources
+        VTK::ImagingGeneral
         VTK::InteractionStyle
         VTK::RenderingOpenGL2
         VTK::RenderingUI
@@ -58,6 +60,7 @@ vtk_module_autoinit(
         VTK::IOImage
         VTK::FiltersCore
         VTK::FiltersSources
+        VTK::ImagingGeneral
         VTK::InteractionStyle
         VTK::RenderingOpenGL2
         VTK::RenderingUI

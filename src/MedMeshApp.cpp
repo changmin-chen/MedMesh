@@ -7,7 +7,9 @@
 #include "vtkConeSource.h"
 #include "vtkDICOMImageReader.h"
 #include "vtkFlyingEdges3D.h"
+#include "vtkImageGaussianSmooth.h"
 #include "vtkImageData.h"
+#include "vtkImageResample.h"
 #include "vtkLight.h"
 #include "vtkInteractorStyleTrackballCamera.h"
 #include "vtkNIFTIImageReader.h"
@@ -15,6 +17,7 @@
 #include "vtkPolyData.h"
 #include "vtkPolyDataConnectivityFilter.h"
 #include "vtkPolyDataMapper.h"
+#include "vtkPolyDataNormals.h"
 #include "vtkProperty.h"
 #include "vtkRenderer.h"
 #include "vtkSTLWriter.h"
@@ -33,10 +36,12 @@
 
 namespace {
 constexpr const char* kCanvasSelector = "#canvas";
+constexpr double kIsoSpacing = 0.8;
+constexpr double kDenoiseStdDev = 0.8;
+constexpr double kDenoiseRadiusFactor = 3.0;
 constexpr int kSmoothingIterations = 15;
-constexpr double kSmoothingPassBand = 0.12;
-constexpr double kSmoothingFeatureAngle = 120.0;
-constexpr double kSmoothingEdgeAngle = 15.0;
+constexpr double kSmoothingPassBand = 0.10;
+constexpr double kCleanAbsoluteTolerance = 0.005;
 
 void ConfigureMeshMaterial(vtkActor* actor) {
     if (!actor) {
@@ -84,7 +89,8 @@ void ConfigureCleanFilter(vtkCleanPolyData* cleaner) {
     }
 
     cleaner->PointMergingOn();
-    cleaner->SetTolerance(0.0);
+    cleaner->ToleranceIsAbsoluteOn();
+    cleaner->SetAbsoluteTolerance(kCleanAbsoluteTolerance);
 }
 
 void ConfigureConnectivityFilter(
@@ -108,11 +114,42 @@ void ConfigureSmoother(vtkWindowedSincPolyDataFilter* smoother) {
 
     smoother->SetNumberOfIterations(kSmoothingIterations);
     smoother->SetPassBand(kSmoothingPassBand);
-    smoother->SetFeatureAngle(kSmoothingFeatureAngle);
-    smoother->SetEdgeAngle(kSmoothingEdgeAngle);
     smoother->BoundarySmoothingOff();
     smoother->FeatureEdgeSmoothingOff();
+    smoother->NonManifoldSmoothingOff();
     smoother->NormalizeCoordinatesOn();
+}
+
+void ConfigureVolumeResample(vtkImageResample* resample) {
+    if (!resample) {
+        return;
+    }
+
+    resample->SetAxisOutputSpacing(0, kIsoSpacing);
+    resample->SetAxisOutputSpacing(1, kIsoSpacing);
+    resample->SetAxisOutputSpacing(2, kIsoSpacing);
+    resample->SetInterpolationModeToLinear();
+}
+
+void ConfigureVolumeDenoise(vtkImageGaussianSmooth* denoise) {
+    if (!denoise) {
+        return;
+    }
+
+    denoise->SetStandardDeviation(kDenoiseStdDev, kDenoiseStdDev, kDenoiseStdDev);
+    denoise->SetRadiusFactor(kDenoiseRadiusFactor);
+}
+
+void ConfigureNormals(vtkPolyDataNormals* normals) {
+    if (!normals) {
+        return;
+    }
+
+    normals->ComputePointNormalsOn();
+    normals->ComputeCellNormalsOff();
+    normals->ConsistencyOn();
+    normals->SplittingOff();
+    normals->AutoOrientNormalsOn();
 }
 
 std::vector<std::filesystem::path> ListSortedChildren(const std::filesystem::path& directory) {
@@ -157,16 +194,20 @@ void MedMeshApp::Initialize() {
     style_->SetDefaultRenderer(renderer_);
     interactor_->SetInteractorStyle(style_);
 
+    volumeResample_ = vtkSmartPointer<vtkImageResample>::New();
+    ConfigureVolumeResample(volumeResample_);
+
+    volumeDenoise_ = vtkSmartPointer<vtkImageGaussianSmooth>::New();
+    ConfigureVolumeDenoise(volumeDenoise_);
+    volumeDenoise_->SetInputConnection(volumeResample_->GetOutputPort());
+
     isoSurface_ = vtkSmartPointer<vtkFlyingEdges3D>::New();
-    isoSurface_->ComputeNormalsOn();
+    isoSurface_->SetInputConnection(volumeDenoise_->GetOutputPort());
+    isoSurface_->ComputeNormalsOff();
     isoSurface_->ComputeScalarsOff();
 
-    meshPreClean_ = vtkSmartPointer<vtkCleanPolyData>::New();
-    ConfigureCleanFilter(meshPreClean_);
-    meshPreClean_->SetInputConnection(isoSurface_->GetOutputPort());
-
     meshConnectivity_ = vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
-    meshConnectivity_->SetInputConnection(meshPreClean_->GetOutputPort());
+    meshConnectivity_->SetInputConnection(isoSurface_->GetOutputPort());
     UpdateConnectivityMode();
 
     meshTriangulator_ = vtkSmartPointer<vtkTriangleFilter>::New();
@@ -182,8 +223,12 @@ void MedMeshApp::Initialize() {
     ConfigureCleanFilter(meshFinalClean_);
     meshFinalClean_->SetInputConnection(meshSmoother_->GetOutputPort());
 
+    meshNormals_ = vtkSmartPointer<vtkPolyDataNormals>::New();
+    ConfigureNormals(meshNormals_);
+    meshNormals_->SetInputConnection(meshFinalClean_->GetOutputPort());
+
     mapper_ = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper_->SetInputConnection(meshFinalClean_->GetOutputPort());
+    mapper_->SetInputConnection(meshNormals_->GetOutputPort());
     mapper_->ScalarVisibilityOff();
 
     actor_ = vtkSmartPointer<vtkActor>::New();
@@ -243,7 +288,7 @@ bool MedMeshApp::ApplyMeshSettings(double value, bool keepLargestComponent) {
     isoValue_ = value;
     keepLargestComponent_ = keepLargestComponent;
 
-    if (!isoSurface_ || !meshFinalClean_ || isoSurface_->GetNumberOfInputConnections(0) == 0) {
+    if (!isoSurface_ || !meshNormals_ || !HasVolumeInput()) {
         hasMesh_ = false;
         SetError("No volume is loaded.");
         return false;
@@ -296,7 +341,7 @@ bool MedMeshApp::LoadNifti(const std::string& virtualPath) {
 
     niftiReader_->SetFileName(virtualPath.c_str());
     niftiReader_->Update();
-    isoSurface_->SetInputConnection(niftiReader_->GetOutputPort());
+    volumeResample_->SetInputConnection(niftiReader_->GetOutputPort());
 
     return LoadVolume(niftiReader_->GetOutput());
 }
@@ -316,7 +361,7 @@ bool MedMeshApp::LoadDicom(const std::string& virtualDirectory) {
     std::cout << "[VTK] loadDicom series: " << seriesDirectory << std::endl;
     dicomReader_->SetDirectoryName(seriesDirectory.c_str());
     dicomReader_->Update();
-    isoSurface_->SetInputConnection(dicomReader_->GetOutputPort());
+    volumeResample_->SetInputConnection(dicomReader_->GetOutputPort());
 
     return LoadVolume(dicomReader_->GetOutput());
 }
@@ -324,12 +369,12 @@ bool MedMeshApp::LoadDicom(const std::string& virtualDirectory) {
 bool MedMeshApp::ExportStl(const std::string& virtualPath) {
     ClearError();
 
-    if (!hasMesh_ || !meshFinalClean_ || isoSurface_->GetNumberOfInputConnections(0) == 0) {
+    if (!hasMesh_ || !meshFinalClean_ || !meshNormals_ || !HasVolumeInput()) {
         SetError("No mesh is available to export.");
         return false;
     }
 
-    meshFinalClean_->Update();
+    meshNormals_->Update();
     vtkPolyData* surface = GetMeshOutput();
     if (!surface || surface->GetNumberOfPoints() == 0 || surface->GetNumberOfCells() == 0) {
         hasMesh_ = false;
@@ -351,7 +396,7 @@ bool MedMeshApp::ExportStl(const std::string& virtualPath) {
 }
 
 void MedMeshApp::UpdateSurface() {
-    if (!isoSurface_ || !meshFinalClean_ || isoSurface_->GetNumberOfInputConnections(0) == 0) {
+    if (!isoSurface_ || !meshNormals_ || !HasVolumeInput()) {
         hasMesh_ = false;
         return;
     }
@@ -359,7 +404,7 @@ void MedMeshApp::UpdateSurface() {
     isoSurface_->SetValue(0, isoValue_);
     isoSurface_->Modified();
     UpdateConnectivityMode();
-    meshFinalClean_->Update();
+    meshNormals_->Update();
     mapper_->Update();
 
     vtkPolyData* surface = GetMeshOutput();
@@ -391,8 +436,12 @@ void MedMeshApp::UpdateConnectivityMode() {
     }
 }
 
+bool MedMeshApp::HasVolumeInput() const {
+    return volumeResample_ && volumeResample_->GetNumberOfInputConnections(0) > 0;
+}
+
 vtkPolyData* MedMeshApp::GetMeshOutput() {
-    return meshFinalClean_ ? meshFinalClean_->GetOutput() : nullptr;
+    return meshNormals_ ? meshNormals_->GetOutput() : nullptr;
 }
 
 bool MedMeshApp::LoadVolume(vtkImageData* image) {
