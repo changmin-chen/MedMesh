@@ -4028,6 +4028,25 @@ async function createWasm() {
   }
   }
 
+  function ___syscall_unlinkat(dirfd, path, flags) {
+  try {
+  
+      path = SYSCALLS.getStr(path);
+      path = SYSCALLS.calculateAt(dirfd, path);
+      if (!flags) {
+        FS.unlink(path);
+      } else if (flags === 512) {
+        FS.rmdir(path);
+      } else {
+        return -28;
+      }
+      return 0;
+    } catch (e) {
+    if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
+    return -e.errno;
+  }
+  }
+
   var getCppExceptionTag = () => ___cpp_exception;
   
   
@@ -7484,11 +7503,6 @@ async function createWasm() {
     };
   var _glAttachShader = _emscripten_glAttachShader;
 
-  var _emscripten_glBeginQuery = (target, id) => {
-      GLctx.beginQuery(target, GL.queries[id]);
-    };
-  var _glBeginQuery = _emscripten_glBeginQuery;
-
   var _emscripten_glBeginTransformFeedback = (x0) => GLctx.beginTransformFeedback(x0);
   var _glBeginTransformFeedback = _emscripten_glBeginTransformFeedback;
 
@@ -7877,9 +7891,6 @@ async function createWasm() {
     };
   var _glEnableVertexAttribArray = _emscripten_glEnableVertexAttribArray;
 
-  var _emscripten_glEndQuery = (x0) => GLctx.endQuery(x0);
-  var _glEndQuery = _emscripten_glEndQuery;
-
   var _emscripten_glEndTransformFeedback = () => GLctx.endTransformFeedback();
   var _glEndTransformFeedback = _emscripten_glEndTransformFeedback;
 
@@ -8220,25 +8231,6 @@ async function createWasm() {
       }
     };
   var _glGetProgramiv = _emscripten_glGetProgramiv;
-
-  var _emscripten_glGetQueryObjectuiv = (id, pname, params) => {
-      if (!params) {
-        // GLES2 specification does not specify how to behave if params is a null pointer. Since calling this function does not make sense
-        // if p == null, issue a GL error to notify user about it.
-        GL.recordError(0x501 /* GL_INVALID_VALUE */);
-        return;
-      }
-      var query = GL.queries[id];
-      var param = GLctx.getQueryParameter(query, pname);
-      var ret;
-      if (typeof param == 'boolean') {
-        ret = param ? 1 : 0;
-      } else {
-        ret = param;
-      }
-      HEAP32[((params)>>2)] = ret;
-    };
-  var _glGetQueryObjectuiv = _emscripten_glGetQueryObjectuiv;
 
   var _emscripten_glGetRenderbufferParameteriv = (target, pname, params) => {
       if (!params) {
@@ -8864,17 +8856,6 @@ async function createWasm() {
 
   var _emscripten_glViewport = (x0, x1, x2, x3) => GLctx.viewport(x0, x1, x2, x3);
   var _glViewport = _emscripten_glViewport;
-
-  function _random_get(buffer, size) {
-  try {
-  
-      randomFill(HEAPU8.subarray(buffer, buffer + size));
-      return 0;
-    } catch (e) {
-    if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
-    return e.errno;
-  }
-  }
 
   
   
@@ -9575,19 +9556,19 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  5616640: ($0, $1) => { findCanvasEventTarget($0).style.cursor = $1 ? 'default' : 'none'; },  
- 5616709: ($0, $1) => { findCanvasEventTarget($0).style.cursor = $1 ? 'default' : 'none'; }
+  2000180: ($0, $1) => { findCanvasEventTarget($0).style.cursor = $1 ? 'default' : 'none'; },  
+ 2000249: ($0, $1) => { findCanvasEventTarget($0).style.cursor = $1 ? 'default' : 'none'; }
 };
 
 // Imports from the Wasm binary.
 var ___getTypeName = makeInvalidEarlyAccess('___getTypeName');
 var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
-var _free = makeInvalidEarlyAccess('_free');
 var _malloc = makeInvalidEarlyAccess('_malloc');
+var _fflush = makeInvalidEarlyAccess('_fflush');
+var _free = makeInvalidEarlyAccess('_free');
 var _setDefaultExpandVTKCanvasToContainer = Module['_setDefaultExpandVTKCanvasToContainer'] = makeInvalidEarlyAccess('_setDefaultExpandVTKCanvasToContainer');
 var _setDefaultInstallHTMLResizeObserver = Module['_setDefaultInstallHTMLResizeObserver'] = makeInvalidEarlyAccess('_setDefaultInstallHTMLResizeObserver');
 var _strerror = makeInvalidEarlyAccess('_strerror');
-var _fflush = makeInvalidEarlyAccess('_fflush');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
 var _emscripten_stack_get_base = makeInvalidEarlyAccess('_emscripten_stack_get_base');
 var _emscripten_builtin_memalign = makeInvalidEarlyAccess('_emscripten_builtin_memalign');
@@ -9610,12 +9591,12 @@ var wasmMemory = makeInvalidEarlyAccess('wasmMemory');
 function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['__getTypeName'] != 'undefined', 'missing Wasm export: __getTypeName');
   assert(typeof wasmExports['__main_argc_argv'] != 'undefined', 'missing Wasm export: __main_argc_argv');
-  assert(typeof wasmExports['free'] != 'undefined', 'missing Wasm export: free');
   assert(typeof wasmExports['malloc'] != 'undefined', 'missing Wasm export: malloc');
+  assert(typeof wasmExports['fflush'] != 'undefined', 'missing Wasm export: fflush');
+  assert(typeof wasmExports['free'] != 'undefined', 'missing Wasm export: free');
   assert(typeof wasmExports['setDefaultExpandVTKCanvasToContainer'] != 'undefined', 'missing Wasm export: setDefaultExpandVTKCanvasToContainer');
   assert(typeof wasmExports['setDefaultInstallHTMLResizeObserver'] != 'undefined', 'missing Wasm export: setDefaultInstallHTMLResizeObserver');
   assert(typeof wasmExports['strerror'] != 'undefined', 'missing Wasm export: strerror');
-  assert(typeof wasmExports['fflush'] != 'undefined', 'missing Wasm export: fflush');
   assert(typeof wasmExports['emscripten_stack_get_end'] != 'undefined', 'missing Wasm export: emscripten_stack_get_end');
   assert(typeof wasmExports['emscripten_stack_get_base'] != 'undefined', 'missing Wasm export: emscripten_stack_get_base');
   assert(typeof wasmExports['emscripten_builtin_memalign'] != 'undefined', 'missing Wasm export: emscripten_builtin_memalign');
@@ -9634,12 +9615,12 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['__cpp_exception'] != 'undefined', 'missing Wasm export: __cpp_exception');
   ___getTypeName = createExportWrapper('__getTypeName', 1);
   _main = Module['_main'] = createExportWrapper('__main_argc_argv', 2);
-  _free = createExportWrapper('free', 1);
   _malloc = createExportWrapper('malloc', 1);
+  _fflush = createExportWrapper('fflush', 1);
+  _free = createExportWrapper('free', 1);
   _setDefaultExpandVTKCanvasToContainer = Module['_setDefaultExpandVTKCanvasToContainer'] = createExportWrapper('setDefaultExpandVTKCanvasToContainer', 1);
   _setDefaultInstallHTMLResizeObserver = Module['_setDefaultInstallHTMLResizeObserver'] = createExportWrapper('setDefaultInstallHTMLResizeObserver', 1);
   _strerror = createExportWrapper('strerror', 1);
-  _fflush = createExportWrapper('fflush', 1);
   _emscripten_stack_get_end = wasmExports['emscripten_stack_get_end'];
   _emscripten_stack_get_base = wasmExports['emscripten_stack_get_base'];
   _emscripten_builtin_memalign = createExportWrapper('emscripten_builtin_memalign', 2);
@@ -9683,6 +9664,8 @@ var wasmImports = {
   __syscall_readlinkat: ___syscall_readlinkat,
   /** @export */
   __syscall_stat64: ___syscall_stat64,
+  /** @export */
+  __syscall_unlinkat: ___syscall_unlinkat,
   /** @export */
   __throw_exception_with_stack_trace: ___throw_exception_with_stack_trace,
   /** @export */
@@ -9806,8 +9789,6 @@ var wasmImports = {
   /** @export */
   glAttachShader: _glAttachShader,
   /** @export */
-  glBeginQuery: _glBeginQuery,
-  /** @export */
   glBeginTransformFeedback: _glBeginTransformFeedback,
   /** @export */
   glBindBuffer: _glBindBuffer,
@@ -9898,8 +9879,6 @@ var wasmImports = {
   /** @export */
   glEnableVertexAttribArray: _glEnableVertexAttribArray,
   /** @export */
-  glEndQuery: _glEndQuery,
-  /** @export */
   glEndTransformFeedback: _glEndTransformFeedback,
   /** @export */
   glFinish: _glFinish,
@@ -9941,8 +9920,6 @@ var wasmImports = {
   glGetProgramInfoLog: _glGetProgramInfoLog,
   /** @export */
   glGetProgramiv: _glGetProgramiv,
-  /** @export */
-  glGetQueryObjectuiv: _glGetQueryObjectuiv,
   /** @export */
   glGetRenderbufferParameteriv: _glGetRenderbufferParameteriv,
   /** @export */
@@ -10021,8 +9998,6 @@ var wasmImports = {
   glVertexAttribPointer: _glVertexAttribPointer,
   /** @export */
   glViewport: _glViewport,
-  /** @export */
-  random_get: _random_get,
   /** @export */
   vtkCreateTimer: _vtkCreateTimer,
   /** @export */
