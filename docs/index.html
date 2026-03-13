@@ -1,39 +1,153 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>MedMesh</title>
-    <link rel="stylesheet" href="style.css"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>MedMesh — Surface Renderer</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 
 <body>
-<div id="toolbar">
-    <input id="file" type="file" accept=".nii"/>
-    <label>
-        Iso:
-        <input id="iso" type="range" min="0" max="1000" step="1" value="300"/>
-        <span id="isoValue">300</span>
+
+<aside id="sidebar">
+
+  <!-- Brand -->
+  <div class="sidebar__brand">
+    <svg class="brand-icon" width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="13" cy="13" r="9.5" stroke="currentColor" stroke-width="1.25" opacity="0.25"/>
+      <circle cx="13" cy="13" r="5.5" stroke="currentColor" stroke-width="1.25"/>
+      <line x1="13" y1="3" x2="13" y2="7.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity="0.5"/>
+      <line x1="13" y1="18.5" x2="13" y2="23" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity="0.5"/>
+      <line x1="3" y1="13" x2="7.5" y2="13" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity="0.5"/>
+      <line x1="18.5" y1="13" x2="23" y2="13" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity="0.5"/>
+      <circle cx="13" cy="13" r="2" fill="currentColor"/>
+    </svg>
+    <div class="brand-text">
+      <span class="brand-name">MedMesh</span>
+      <span class="brand-tag">Surface Renderer</span>
+    </div>
+  </div>
+
+  <div class="sidebar__rule"></div>
+
+  <!-- DATA SOURCE -->
+  <section class="panel-section">
+    <div class="section-header">
+      <span class="section-label">Data Source</span>
+    </div>
+    <div class="drop-hint" id="drop-hint">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M11 3v11"/>
+        <path d="M7 10l4-7 4 7"/>
+        <path d="M4 16h14"/>
+        <path d="M4 19h14" opacity="0.35"/>
+      </svg>
+      <p class="drop-hint__text">Drop a <code>.nii</code> file<br/>or a DICOM folder</p>
+    </div>
+    <div class="status-row">
+      <span class="status-dot"></span>
+      <span id="status" data-state="ready">Waiting for input</span>
+    </div>
+  </section>
+
+  <div class="sidebar__rule"></div>
+
+  <!-- ISO SURFACE -->
+  <section class="panel-section">
+    <div class="section-header">
+      <span class="section-label">Mesh Build</span>
+    </div>
+
+    <div class="numeric-row">
+      <button id="isoStepDown" type="button" class="step-btn" disabled>-1</button>
+      <label class="numeric-field" for="isoInput">
+        <span class="numeric-field__label">Iso value</span>
+        <input id="isoInput" type="number" step="any" inputmode="decimal" disabled/>
+      </label>
+      <button id="isoStepUp" type="button" class="step-btn" disabled>+1</button>
+    </div>
+
+    <div class="slider-track-wrap">
+      <input id="iso" type="range" min="0" max="1000" step="any" value="300" disabled/>
+    </div>
+    <div class="slider-landmarks" aria-hidden="true">
+      <span id="rangeMin">-</span>
+      <span id="rangeMid">-</span>
+      <span id="rangeMax">-</span>
+    </div>
+    <label class="toggle-row" for="largestComponent">
+      <input id="largestComponent" type="checkbox" checked disabled/>
+      <span class="toggle-track">
+        <span class="toggle-thumb"></span>
+      </span>
+      <span class="toggle-label">Largest component only</span>
     </label>
-    <button id="reset">Reset Camera</button>
-    <span id="range"></span>
+    <button id="applyMesh" type="button" class="action-btn action-btn--accent" disabled>
+      Apply
+    </button>
+  </section>
+
+  <div class="sidebar__rule"></div>
+
+  <!-- ACTIONS -->
+  <section class="panel-section">
+    <div class="section-header">
+      <span class="section-label">Actions</span>
+    </div>
+    <div class="actions-row">
+      <button id="reset" type="button" class="action-btn action-btn--ghost" title="Reset Camera" disabled>
+        <svg width="14" height="14" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1.5 6.5a5 5 0 1 0 .9-2.8"/>
+          <path d="M1.5 1.5v3h3"/>
+        </svg>
+        Reset Camera
+      </button>
+      <button id="download" type="button" class="action-btn action-btn--accent" disabled>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6.5 1.5v8"/>
+          <path d="M3.5 7l3 3 3-3"/>
+          <path d="M1.5 11.5h10"/>
+        </svg>
+        Export STL
+      </button>
+    </div>
+  </section>
+
+  <div class="sidebar__footer">
+    <span>NIFTI &middot; DICOM &middot; STL</span>
+  </div>
+
+</aside>
+
+<!-- Drag-and-drop overlay (covers canvas area) -->
+<div id="dropzone" aria-hidden="true">
+  <div class="dropzone__panel">
+    <strong>Drop to load</strong>
+    <span>File &rarr; NIFTI &nbsp;&middot;&nbsp; Directory &rarr; DICOM series</span>
+  </div>
+</div>
+
+<div id="viewportStatus" aria-live="polite" aria-hidden="true">
+  <div class="viewport-status__panel">
+    <span class="viewport-status__label">Renderer</span>
+    <strong id="viewportStatusText">Updating surface...</strong>
+  </div>
 </div>
 
 <canvas id="canvas" tabindex="-1" onclick="this.focus()"></canvas>
 
 <script>
-    // Must exist BEFORE med_mesh.js executes
-    var Module = {
-        canvas: () => document.getElementById('canvas'),
-        print: (txt) => console.log(txt),
-        printErr: (txt) => console.error(txt),
-    };
+  var Module = {
+    canvas: () => document.getElementById("canvas"),
+    print: (txt) => console.log(txt),
+    printErr: (txt) => console.error(txt),
+  };
 </script>
-
-<!-- IMPORTANT: UI script first (classic script, not module) -->
 <script src="app.js"></script>
-
-<!-- Emscripten output -->
 <script src="med_mesh.js"></script>
 </body>
 </html>
