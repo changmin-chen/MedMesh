@@ -9,6 +9,7 @@
 
 class vtkActor;
 class vtkCleanPolyData;
+class vtkConeSource;
 class vtkDICOMImageReader;
 class vtkFlyingEdges3D;
 class vtkInteractorStyleTrackballCamera;
@@ -75,6 +76,8 @@ private:
   vtkSmartPointer<vtkInteractorStyleTrackballCamera> style_;
   vtkSmartPointer<vtkPolyDataMapper> mapper_;
   vtkSmartPointer<vtkActor> actor_;
+  vtkSmartPointer<vtkConeSource> placeholderCone_;
+  vtkSmartPointer<vtkActor> placeholderActor_;
   vtkSmartPointer<vtkNIFTIImageReader> niftiReader_;
   vtkSmartPointer<vtkDICOMImageReader> dicomReader_;
   vtkSmartPointer<vtkFlyingEdges3D> isoSurface_;
